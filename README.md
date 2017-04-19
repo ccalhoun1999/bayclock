@@ -1,2 +1,0 @@
-# bayclock
-bay clock
