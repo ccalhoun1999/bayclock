@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<style>
+body {
+	font-family: "Trebuchet MS";
+}
+</style>
+
+<head>
+	<title>Bay Clock</title>
+</head>
+
+<body>
+	<h1 id="htmlcurrent_date"></h1>
+
+	<div id="main"></div> <!-- I create div's in javascript and append them to this latter -->
+
+</body>
+
+<script>
+	var s_since_midnight; //Declares s_since_midnight as a global variable, useful since its used in a few functions
+
+	function setup_time() {
+		var current_time = new Date(); //Get current date and all that jazz
+		var milliseconds = new Date(current_time); //Get milliseconds since January 1st 1970
+		s_since_midnight = Math.floor((current_time - milliseconds.setHours(0,0,0,0)) / 1000); //Convert to milliseconds since midnight
+		current_time = current_time.toString();
+		current_time = current_time.substring(0, 25);
+		document.getElementById("htmlcurrent_date").innerHTML = current_time;
+		return s_since_midnight;
+	}
+
+	function time_bar(start, end, div_id, till_id, remaining_id) { //start is the start of class in seconds, end is end in seconds, duration is duration in seconds, div_id is the progress bar's id (the second div, not the outmost one above)
+		var div = document.getElementById(div_id); //Saves me time typing
+		var duration = end - start;
+		var width = ((s_since_midnight - start) / duration) * 100; //I'll leave it for now but I don't think I'll need these two lines later (this and the next) set this to 0 to check and comment out the next
+		div.style.width = width + "%"; //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+		var id = setInterval(update, 1); //Makes the next thing run every millisecond :D fancy af
+		function update() { //Function that runs a lot
+			if (width >= 100) { //If statement, common.
+				width = 100; //If width is over 100% terminate the bar
+				div.style.width = width + "%"; //Set bar fullness to 100%
+				clearInterval(id); //Terminates this block if the bar fills up completely, keeps the site looking neat
+			} else {
+				width = ((s_since_midnight - start) / duration) * 100; //Update width
+				div.style.width = width + "%"; //Update CSS with new width
+			}
+		}
+		setInterval(start_end, 1);
+		function start_end(){
+			s_since_midnight = setup_time();
+			var time_till;
+			if (start > s_since_midnight) {
+				time_till = start - s_since_midnight;
+				document.getElementById(till_id).innerHTML = "Time until start: " + s_to_hms(time_till);
+			} else if (start < s_since_midnight) {
+				time_till = s_since_midnight - start;
+				document.getElementById(till_id).innerHTML = "Time since start: " + s_to_hms(time_till);
+			}
+			var time_remaining;
+			if (end > s_since_midnight) {
+				time_remaining = end - s_since_midnight;
+				document.getElementById(remaining_id).innerHTML = "Time until end: " + s_to_hms(time_remaining);
+			} else if (end < s_since_midnight) {
+				time_remaining = s_since_midnight - end;
+				document.getElementById(remaining_id).innerHTML = "Time since end: " + s_to_hms(time_remaining);
+			}
+		}
+		//document.getElementById(till_id).innerHTML = s_to_hms(start)
+	}
+
+	function s_to_hms(s) {
+		var hours = Math.floor(s / 3600);
+		var minutes = Math.floor((s % 3600) / 60);
+		var seconds = ((s % 3600) % 60).toFixed(0);
+		if (seconds == 60){
+			minutes = minutes + 1;
+			seconds = 0;
+		}
+		if (minutes == 60) {
+			hours = hours + 1;
+			minutes = 0;
+		}
+		if ((minutes > 9) && (seconds > 9)) {
+			return hours + ":" + minutes + ":" + seconds;
+		} else if ((minutes < 10) && (seconds < 10)) {
+			return hours + ":0" + minutes + ":0" + seconds;
+		} else if ((minutes < 10) && (seconds > 9)) {
+			return hours + ":0" + minutes + ":" + seconds;
+		} else if ((minutes > 9) && (seconds < 10)) {
+			return hours + ":" + minutes + ":0" + seconds;
+		}
+	}
+
+	function hm_to_s(hms){
+		var h = parseInt(hms.substring(0, 3));
+		var m = parseInt(hms.substring(3, 5));
+
+		return (h * 3600) + (m * 60);
+	}
+
+	var div_number = 0;
+
+	function create_bar(start, end, block_name) { //Start is the start time of the class in military time ex: "13:10", End is the end time in the same format, block_name is the name of the block (this goes in the middle of the progress bar), examples are under the monday, tuesday, wednesday, etc functions below
+		var first_loop = true;
+		var div_name = "div_name" + div_number;
+		var div_id = "div_id" + div_number;
+		var till_id = "till_id" + div_number;
+		var remaining_id = "remaining_id" + div_number;
+		var block_id = "block_id" + div_number;
+		var time_start = start;
+		var time_end = end;
+		start = hm_to_s(start);
+		end = hm_to_s(end);
+		var div = document.createElement("div"); //Create outermost div, the grey bar one
+		div.id = div_name; //Give div id = to that when declaring the function BE CAREFUL WITH THIS, IT TOOK 2 HOURS TO REALIZE THIS IS DIV_NAME NOT DIV_ID CAUSE I STARTED RUNNING OUT OF VARIABLE NAMES!!!!!!!
+		div.style.position = "relative";
+		div.style.width = "100%";
+		div.style.backgroundColor = "lightgrey";
+		div.style.borderRadius = "5px";
+		div.style.height = "24px";
+		//div.stlye.zIndex = "1";
+		div.style.color = "white";
+		div.style.marginTop = "10px";
+		div.style.fontSize = "18px";
+		
+		var div_till = document.createElement("div"); //Create div wich will hold the time till class starts
+		div_till.id = till_id;
+		div_till.style.textAlign = "left";
+		div_till.style.position = "relative";
+		div_till.style.zIndex = "3";
+		div_till.style.marginLeft = "5px";
+		div_till.style.height = "30px"; //check if this can be set to 24 later, this will bug me
+		
+		var div_block = document.createElement("div"); // create div for the text in the middle of the bar
+		div_block.id = block_id;
+		div_block.style.textAlign = "center";
+		div_block.style.position = "relative";
+		div_block.style.marginTop = "-30px";
+		div_block.style.zIndex = "3";
+		div_block.innerHTML = time_start + " - " + time_end + " " + block_name;
+		
+		var div_time_remaining = document.createElement("div"); //create the time remaining text's div on the right of the bar
+		div_time_remaining.id = remaining_id;
+		div_time_remaining.style.textAlign = "right";
+		div_time_remaining.style.position = "relative";
+		div_time_remaining.style.zIndex = "3";
+		div_time_remaining.style.top = "-21px";
+		div_time_remaining.style.marginRight = "5px";
+		
+		var div_progress = document.createElement("div"); //create div for the progress bar, blue thingy
+		div_progress.id = div_id;
+		div_progress.style.position = "absolute";
+		div_progress.style.top = "0";
+		//div_progress.style.marginTop = "-15px";
+		div_progress.style.height = "24px";
+		div_progress.style.backgroundColor = "#232d61";
+		//div_progress.style.lineHeight = "30px";
+		div_progress.style.borderRadius = "5px";
+		div_progress.style.zIndex = "2";
+
+		document.getElementById("main").appendChild(div);
+
+		document.getElementById(div_name).appendChild(div_till);
+		document.getElementById(div_name).appendChild(div_block);
+		document.getElementById(div_name).appendChild(div_time_remaining);
+		document.getElementById(div_name).appendChild(div_progress);
+
+		if (first_loop == true) {
+			first_loop = false;
+			div_number = div_number + 1;
+		}
+
+		setInterval(time_bar(start, end, div_id, till_id, remaining_id), 1);
+	}
+
+	function monday(){
+		create_bar("08:10", "08:30", "Morning Meeting");
+		create_bar("08:35", "09:55", "A Block");
+		create_bar("10:05", "11:25", "B Block");
+		create_bar("11:30", "12:05", "1st Lunch / Clubs");
+		create_bar("12:05", "12:40", "2nd Lunch / Clubs");
+		create_bar("12:40", "14:00", "C Block");
+		create_bar("14:05", "15:25", "D Block");
+	}
+
+	function tuesday(){
+		create_bar("08:10", "08:30", "Morning Meeting");
+		create_bar("08:35", "09:55", "E Block");
+		create_bar("10:05", "11:25", "A Block");
+		create_bar("11:30", "12:10", "1st Lunch or B Split pt 1");
+		create_bar("12:10", "12:50", "2nd Lunch");
+		create_bar("12:10", "13:30", "B Block Full");
+		create_bar("12:50", "13:30", "B Split pt 2");
+		create_bar("13:35", "14:55", "C Block");
+		create_bar("15:00", "15:30", "Tutorial");
+		
+	}
+
+	function wednesday(){
+		/*
+		create_bar("08:10", "08:30", "Advisory");
+		create_bar("08:35", "09:55", "D Block");
+		create_bar("10:05", "11:25", "E Block");
+		create_bar("11:30", "12:10", "1st Lunch or A Split pt 1");
+		create_bar("12:10", "12:50", "2nd Lunch");
+		create_bar("12:10", "13:30", "A Block Full");
+		create_bar("12:50", "13:30", "A Split pt 2");
+		create_bar("13:35", "14:55", "B Block");
+		create_bar("15:00", "15:30", "Tutorial");
+		*/
+		create_bar("08:10", "08:30", "Advisory");
+		create_bar("08:35", "09:35", "D Block");
+		create_bar("09:45", "10:45", "E Block");
+		create_bar("10:50", "11:50", "A Block Full");
+		create_bar("11:50", "12:20", "Non-split lunch");
+		create_bar("10:50", "11:20", "A Split pt 1");
+		create_bar("11:20", "11:50", "Split Lunch");
+		create_bar("11:50", "12:20", "A Split pt 2");
+		create_bar("12:25", "13:25", "B Block");
+		create_bar("13:30", "15:00", "All School Gathering");
+		create_bar("15:00", "15:30", "Tutorial?");
+	}
+
+	function thursday(){
+		create_bar("08:10", "08:30", "Morning Meeting");
+		create_bar("08:35", "09:55", "C Block");
+		create_bar("10:05", "11:25", "D Block");
+		create_bar("11:30", "12:10", "1st Lunch or E Split pt 1");
+		create_bar("12:10", "12:50", "2nd Lunch");
+		create_bar("12:10", "13:30", "E Block Full");
+		create_bar("12:50", "13:30", "E Split pt 2");
+		create_bar("13:35", "14:55", "A Block");
+		create_bar("15:00", "15:30", "Tutorial");
+		
+	}
+	
+	function friday(){
+		create_bar("08:10", "08:30", "Morning Meeting");
+		create_bar("08:35", "09:55", "B Block");
+		create_bar("10:05", "11:25", "C Block");
+		create_bar("11:30", "12:05", "1st Lunch / Clubs");
+		create_bar("12:05", "12:40", "2nd Lunch / Clubs");
+		create_bar("12:40", "14:00", "D Block");
+		create_bar("14:05", "15:25", "E Block");
+	}
+
+	function intersession(){
+		create_bar("08:00", "15:30", "I", "I_progress", "I_time_till", "I_time_remaining", "I_block", "Intersession");
+	}
+
+	function no_school(){
+		create_bar("00:00", "24:00", "I", "I_progress", "I_time_till", "I_time_remaining", "I_block", "No School");
+	}
+
+	function start() {
+		var d = new Date();
+		d = d.getDay();
+		console.log(d);
+		if (d == 0 || d == 6) {
+			no_school();
+		} else if (d == 1) {
+			monday();
+		} else if (d == 2) {
+			tuesday();
+		} else if (d == 3) {
+			wednesday();
+		} else if (d == 4) {
+			thursday();
+		} else if (d == 5) {
+			friday();
+		}
+		setInterval("setup_time()", 1);
+	}
+
+	start();
+
+</script>
+
+</html>
